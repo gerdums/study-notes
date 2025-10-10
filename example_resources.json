@@ -1,0 +1,32 @@
+[
+  {
+    "id": "sbch-01007004",
+    "title": "The Flood Chronology",
+    "content": "This chart presents a detailed timeline of the flood described in Genesis 7-8, including when the rain began, how long it lasted, when the ark came to rest, and when Noah and his family finally exited the ark.",
+    "type": "chart"
+  },
+  {
+    "id": "sbfig-01010032",
+    "title": "The Nations of Genesis 10",
+    "content": "This map shows the geographical distribution of the nations that descended from Noah's sons: Shem, Ham, and Japheth, as described in the Table of Nations in Genesis 10.",
+    "type": "figure"
+  },
+  {
+    "id": "sbfig-01012001",
+    "title": "The Journeys of Abram",
+    "content": "This map traces Abram's (Abraham's) journey from Ur of the Chaldeans through Haran to Canaan, and his travels within the Promised Land as recorded in Genesis 12-25.",
+    "type": "figure"
+  },
+  {
+    "id": "sbch-01031035",
+    "title": "False Gods in the Old Testament",
+    "content": "This chart lists the major false gods and idols mentioned in the Old Testament, including those encountered by the patriarchs, and describes their significance in ancient Near Eastern religions.",
+    "type": "chart"
+  },
+  {
+    "id": "intro-01",
+    "title": "Introduction to Genesis",
+    "content": "Genesis is the book of beginnings. It records the beginning of the universe, the beginning of human history, the beginning of sin in the world, and the beginning of God's plan of redemption. Genesis lays the foundation on which the entire Bible stands.",
+    "type": "introduction"
+  }
+] 
