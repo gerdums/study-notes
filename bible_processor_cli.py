@@ -409,7 +409,6 @@ def process_bible_scml(input_file, output_dir, show_progress=True):
 
 def process_study_note(com_element, book_name, book_id):
     """Process a single study note (com element)."""
-    note_entry = {}
     com_id_full = com_element.get('id')
     
     if not com_id_full:
@@ -420,10 +419,8 @@ def process_study_note(com_element, book_name, book_id):
     if not match_id:
         return None
     
-    note_entry['start'] = int(match_id.group(1))
-    note_entry['book'] = book_name
-    if book_id:
-        note_entry['book_id'] = book_id
+    start_id = int(match_id.group(1))
+    end_id = None
     
     header_html = ""
     # Process initial <bcv><xbr> for header and potential end_id
@@ -436,8 +433,8 @@ def process_study_note(com_element, book_name, book_id):
                 _, parsed_end_id, display_ref_str = parse_ref_string(t_attr)
                 if display_ref_str:
                     header_html = f"<b><a>{display_ref_str}</a></b>"
-                if parsed_end_id and parsed_end_id != note_entry['start']:
-                    note_entry['end'] = parsed_end_id
+                if parsed_end_id and parsed_end_id != start_id:
+                    end_id = parsed_end_id
     
     # Process the rest of the content
     main_body_html = serialize_element_content(com_element, is_top_com_element=True)
@@ -448,9 +445,16 @@ def process_study_note(com_element, book_name, book_id):
             full_content += " "
         full_content += main_body_html
     
-    note_entry['content'] = re.sub(r'\s+', ' ', full_content).strip()
+    content = re.sub(r'\s+', ' ', full_content).strip()
+    if not content:
+        return None
     
-    return note_entry if note_entry['content'] else None
+    note_entry = {'start': start_id}
+    if end_id:
+        note_entry['end'] = end_id
+    note_entry['content'] = content
+    
+    return note_entry
 
 def process_resource(elem, book_name, book_id):
     """Process a resource element, filtering out Bible text and structural elements."""
@@ -481,9 +485,6 @@ def process_resource(elem, book_name, book_id):
         if not resource_id or resource_id.startswith('fig') and len(resource_id) < 10:
             return None
     
-    # Generate resource entry
-    resource_entry = {}
-    
     if not resource_id and elem.tag == 'chapter':
         original_semantic = elem.get('semantic', '')
         if original_semantic:
@@ -491,10 +492,7 @@ def process_resource(elem, book_name, book_id):
         else:
             return None
     
-    resource_entry['id'] = resource_id or f"resource_{elem.tag}"
-    resource_entry['book'] = book_name
-    if book_id:
-        resource_entry['book_id'] = book_id
+    resolved_id = resource_id or f"resource_{elem.tag}"
     
     # Process title - be more selective about title sources
     title = None
@@ -513,59 +511,59 @@ def process_resource(elem, book_name, book_id):
             title = elem.get('semantic')  # Use original case for title
     
     if not title:
-        title = f"Resource {resource_entry['id']}"
-    
-    resource_entry['title'] = title
+        title = f"Resource {resolved_id}"
     
     # Process content and filter out minimal content
     try:
         content_html = serialize_element_content(elem)
         content_clean = re.sub(r'\s+', ' ', content_html).strip()
-        
-        # Filter out resources with minimal or meaningless content
-        if len(content_clean) < 50:  # Very short content
-            return None
-        
-        # Filter out content that's just titles or headings
-        if content_clean.lower() == title.lower():
-            return None
-            
-        resource_entry['content'] = content_clean
-        
-    except Exception as e:
+    except Exception:
         return None  # Skip resources with processing errors
+    
+    # Filter out resources with minimal or meaningless content
+    if len(content_clean) < 50:  # Very short content
+        return None
+    
+    # Filter out content that's just titles or headings
+    if content_clean.lower() == title.lower():
+        return None
     
     # Determine resource type and be more selective
     if elem.tag == 'sbfig':
-        resource_entry['type'] = 'figure'
+        resource_type = 'figure'
     elif elem.tag == 'sbch':
-        resource_entry['type'] = 'chart'
+        resource_type = 'chart'
     elif elem.tag == 'figure':
-        resource_entry['type'] = 'figure'
+        resource_type = 'figure'
     elif elem.tag == 'chapter':
         if 'introduction' in semantic:
-            resource_entry['type'] = 'introduction'
+            resource_type = 'introduction'
         elif any(keyword in semantic for keyword in ['notes', 'features', 'translator']):
-            resource_entry['type'] = 'notes'
+            resource_type = 'notes'
         elif any(keyword in semantic for keyword in ['outline', 'timeline', 'chronology']):
-            resource_entry['type'] = 'outline'
+            resource_type = 'outline'
         elif any(keyword in semantic for keyword in ['background', 'setting', 'context']):
-            resource_entry['type'] = 'background'
+            resource_type = 'background'
         elif any(keyword in semantic for keyword in ['map', 'chart', 'table']):
-            resource_entry['type'] = 'chart'
+            resource_type = 'chart'
         else:
             # For other chapter content, be very selective
-            if len(resource_entry['content']) < 200:  # Short content probably not a real resource
+            if len(content_clean) < 200:  # Short content probably not a real resource
                 return None
-            resource_entry['type'] = 'article'
+            resource_type = 'article'
     else:
-        resource_entry['type'] = 'other'
+        resource_type = 'other'
     
     # Final check - ensure we have meaningful content
-    if not resource_entry.get('content', '').strip() or len(resource_entry['content']) < 50:
+    if not content_clean.strip() or len(content_clean) < 50:
         return None
     
-    return resource_entry
+    return {
+        'id': resolved_id,
+        'title': title,
+        'content': content_clean,
+        'type': resource_type
+    }
 
 def main():
     parser = argparse.ArgumentParser(
@@ -619,4 +617,4 @@ Examples:
         sys.exit(1)
 
 if __name__ == "__main__":
-    main() 
+    main()
