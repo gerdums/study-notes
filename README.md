@@ -1,6 +1,50 @@
 # Bible Study Notes Processor
 
-This script processes SCML (Scripture Markup Language) files containing Bible text, study notes, and resources, extracting them into separate JSON files by book.
+This repository contains tools for processing SCML (Scripture Markup Language) files containing Bible text, study notes, and resources, extracting them into structured JSON files.
+
+## Tools
+
+### study_notes_cli.py
+
+A robust CLI tool that processes entire Bible translations (ESV, LSB, NASB, NKJV) from SCML files and produces consolidated JSON files per translation.
+
+**Usage:**
+
+```bash
+# Process a single translation
+python3 study_notes_cli.py --translation ESV
+
+# Process all translations
+python3 study_notes_cli.py --all
+
+# Custom input/output directories
+python3 study_notes_cli.py --translation ESV --inputs-dir ./inputs --output-dir ./output
+
+# Copy only referenced images
+python3 study_notes_cli.py --translation ESV --only-referenced-images
+
+# Fail on missing images
+python3 study_notes_cli.py --translation ESV --strict-images
+```
+
+**Options:**
+- `--translation TRANSLATION`: Process a single translation (e.g., ESV, LSB, NASB, NKJV)
+- `--all`: Process all translations found in inputs directory
+- `--inputs-dir PATH`: Directory containing translation subdirectories (default: `./inputs`)
+- `--output-dir PATH`: Directory for output files (default: `./output`)
+- `--copy-all-images`: Copy entire images folder (default: enabled)
+- `--only-referenced-images`: Copy only images referenced by resources
+- `--strict-images`: Fail if referenced images are missing
+- `--progress/--no-progress`: Enable/disable progress messages
+
+**Output Structure:**
+
+For each translation, creates `output/<TRANSLATION>/` containing:
+- `notes.json`: Array of study notes with `start`, optional `end`, and `content`
+- `resources.json`: Array of resources with `id`, `title`, `content`, and `type`
+- `images/`: Copied image files from the translation's images folder
+
+### bible_book_processor.py
 
 ## Features
 
@@ -11,13 +55,13 @@ This script processes SCML (Scripture Markup Language) files containing Bible te
 - Handles incomplete or malformed XML gracefully
 - Provides fallback mechanisms for identifying book content
 
-## Usage
+**Usage:**
 
 ```bash
 python bible_book_processor.py <input_scml_file> <output_directory>
 ```
 
-### Example
+**Example:**
 
 ```bash
 python bible_book_processor.py bible.scml output
